@@ -1,4 +1,4 @@
-# Tu te mets combien ?
+# Tu te mets combien ? 
 
 Jeu d'enchères pour deux équipes, piloté par un meneur de jeu (MJ).
 Trois fichiers, aucune installation, aucun serveur : ça tourne dans le navigateur.
