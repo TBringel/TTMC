@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tu te mets combien ?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --encre:#0E1A2B;
+  --panneau:#17263C;
+  --panneau-haut:#1F3352;
+  --laiton:#E9B949;
+  --equipeA:#45D0C7;
+  --equipeB:#FF6F5E;
+  --craie:#F3F0E7;
+  --sourdine:#8296B0;
+  --danger:#FF8A3D;
+  --r:14px;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --corps:"IBM Plex Sans", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(120% 80% at 50% 0%, #1B2E4A 0%, var(--encre) 60%);
+  color:var(--craie);
+  font-family:var(--corps);
+  min-height:100vh;
+  padding:18px 16px 32px;
+  -webkit-font-smoothing:antialiased;
+}
+.app{max-width:920px;margin:0 auto}
+
+/* ---------- Tableau des scores ---------- */
+.plateau{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;margin-bottom:22px}
+.equipe{
+  background:var(--panneau);border:1px solid #25385A;
+  border-radius:var(--r);padding:12px 14px;min-width:0;position:relative;overflow:hidden;
+}
+.equipe::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--c)}
+.equipe.actif{background:var(--panneau-haut);box-shadow:0 0 0 1px var(--c) inset}
+.equipe .nom{
+  font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--c)
+}
+.equipe .pts{font-family:var(--display);font-weight:800;font-size:38px;line-height:1;margin-top:4px}
+.equipe .etat{font-size:11px;color:var(--sourdine);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;min-height:14px}
+.manche{
+  align-self:center;text-align:center;padding:0 6px;color:var(--sourdine);
+  font-size:11px;text-transform:uppercase;letter-spacing:.1em
+}
+.manche b{display:block;font-family:var(--display);font-weight:800;font-size:22px;color:var(--craie);letter-spacing:0}
+
+/* ---------- Cartes / écrans ---------- */
+.carte{
+  background:var(--panneau);border:1px solid #25385A;border-radius:var(--r);
+  padding:22px 20px;
+}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,6vw,40px);line-height:1;margin:0 0 6px}
+h2{font-family:var(--display);font-weight:800;font-size:20px;margin:0 0 14px}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--laiton);margin:0 0 10px;font-weight:600}
+p.aide{color:var(--sourdine);font-size:14px;line-height:1.5;margin:0 0 16px}
+
+label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--sourdine);margin-bottom:6px}
+input[type=text],input[type=number],select{
+  width:100%;background:#0D1729;border:1px solid #2B4166;color:var(--craie);
+  border-radius:10px;padding:12px 13px;font-family:var(--corps);font-size:16px
+}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--laiton);outline-offset:2px}
+.champs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.case{display:flex;gap:10px;align-items:flex-start;margin-bottom:18px}
+.case input{margin-top:3px;width:18px;height:18px;accent-color:var(--laiton)}
+.case span{font-size:14px;color:var(--craie);line-height:1.4}
+
+button{font-family:var(--corps);cursor:pointer;border:none}
+.btn{
+  background:var(--laiton);color:#16233A;font-weight:600;font-size:16px;
+  border-radius:11px;padding:14px 20px;width:100%
+}
+.btn:hover{filter:brightness(1.08)}
+.btn.fant{background:transparent;color:var(--craie);border:1px solid #33507D}
+.btn.fant:hover{background:#1D3050;filter:none}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn.ok{background:#3FBF7F;color:#0B2418}
+.btn.ko{background:#3A2438;color:#FFB4A8;border:1px solid #6B3448}
+
+/* ---------- Choix du thème ---------- */
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.theme-btn{
+  background:#0D1729;border:1px solid #2B4166;color:var(--craie);border-radius:11px;
+  padding:16px 12px;font-size:15px;font-family:var(--display);font-weight:600;text-align:left;line-height:1.2
+}
+.theme-btn:hover{border-color:var(--laiton);background:#152744}
+.theme-btn small{display:block;font-family:var(--corps);font-weight:400;font-size:11px;color:var(--sourdine);margin-top:5px;text-transform:uppercase;letter-spacing:.06em}
+
+/* ---------- Signature : l'échelle d'enchère ---------- */
+.enchere{text-align:center;margin:6px 0 20px}
+.enchere .qui{font-family:var(--display);font-weight:800;font-size:clamp(20px,5vw,28px);color:var(--c);margin-bottom:2px}
+.enchere .mise{
+  font-family:var(--display);font-weight:800;font-size:clamp(72px,22vw,120px);line-height:.9;
+  color:var(--laiton);letter-spacing:-.03em;font-variant-numeric:tabular-nums
+}
+.enchere .mise.vide{color:#2E4A72}
+.enchere .legende{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--sourdine)}
+
+.echelle{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin:18px 0}
+.barreau{
+  position:relative;background:#0D1729;border:1px solid #2B4166;color:var(--sourdine);
+  border-radius:9px;padding:14px 0 12px;font-family:var(--display);font-weight:800;font-size:19px;
+  transition:transform .12s ease, background .12s ease
+}
+.barreau:not(:disabled):hover{background:#22406B;color:var(--craie);transform:translateY(-3px)}
+.barreau.atteint{background:#233A5E;color:#5D77A0}
+.barreau.courant{background:var(--laiton);color:#16233A;transform:translateY(-5px);box-shadow:0 6px 0 -2px #A87F1E}
+.barreau.dispo{color:var(--craie);border-color:#3B588A}
+.barreau.corse{border-color:#7A4A2A;color:var(--danger)}
+.barreau:disabled{opacity:.35;cursor:not-allowed}
+.barreau .posee{position:absolute;top:3px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--sourdine)}
+
+/* ---------- Question ---------- */
+.enonce{
+  background:#0D1729;border:1px solid #2B4166;border-left:4px solid var(--laiton);
+  border-radius:11px;padding:20px 18px;margin-bottom:16px
+}
+.enonce .niv{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--laiton);font-weight:600;margin-bottom:8px}
+.enonce .txt{font-family:var(--display);font-weight:600;font-size:clamp(19px,4.4vw,26px);line-height:1.25}
+.reponse{
+  background:#12291F;border:1px solid #2A5C41;border-radius:11px;padding:16px 18px;margin-bottom:16px
+}
+.reponse .lab{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#6FD79B;font-weight:600;margin-bottom:6px}
+.reponse .txt{font-size:18px;font-weight:500}
+
+.resultat{text-align:center;padding:10px 0 6px}
+.resultat .gros{font-family:var(--display);font-weight:800;font-size:clamp(24px,6vw,34px);line-height:1.1;margin-bottom:8px}
+.resultat .detail{color:var(--sourdine);font-size:15px;margin-bottom:20px}
+
+.pied{margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.pied button{background:none;color:var(--sourdine);font-size:12px;text-decoration:underline;padding:6px}
+.pied button:hover{color:var(--craie)}
+.raccourcis{margin-top:14px;text-align:center;font-size:11px;color:#5C7495;letter-spacing:.04em}
+
+@media (max-width:560px){
+  .champs{grid-template-columns:1fr}
+  .echelle{grid-template-columns:repeat(5,1fr)}
+  .plateau{grid-template-columns:1fr 1fr;grid-template-areas:"a b" "m m";gap:8px}
+  .equipe:first-child{grid-area:a}.equipe:last-child{grid-area:b}.manche{grid-area:m}
+  .equipe .pts{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="plateau" id="plateau" hidden>
+    <div class="equipe" id="eqA" style="--c:var(--equipeA)">
+      <div class="nom" id="nomA">Équipe 1</div>
+      <div class="pts" id="ptsA">0</div>
+      <div class="etat" id="etatA"></div>
+    </div>
+    <div class="manche">Manche<b id="numManche">1</b></div>
+    <div class="equipe" id="eqB" style="--c:var(--equipeB)">
+      <div class="nom" id="nomB">Équipe 2</div>
+      <div class="pts" id="ptsB">0</div>
+      <div class="etat" id="etatB"></div>
+    </div>
+  </div>
+
+  <div class="carte" id="ecran"></div>
+
+  <div class="pied" id="pied" hidden>
+    <button id="btnAnnuler">Annuler la manche</button>
+    <button id="btnRejouer">Nouvelle partie</button>
+  </div>
+</div>
+
+<script src="questions.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var THEMES = (window.THEMES || []).map(function(t){
+    var q = (t.questions||[]).slice().sort(function(a,b){return a.niveau-b.niveau;});
+    return { theme:t.theme, questions:q };
+  });
+
+  var S = {
+    ecran:"reglages",
+    equipes:[{nom:"Équipe 1",score:0},{nom:"Équipe 2",score:0}],
+    objectif:30,
+    malus:true,
+    manche:1,
+    ouvreur:0,     // équipe qui ouvre les enchères
+    tour:0,        // à qui de parler
+    mise:0,
+    encherisseur:null,
+    themeIdx:null,
+    posees:{},     // themeIdx -> [niveaux déjà posés]
+    reponseVisible:false,
+    snapshot:null
+  };
+
+  var el = document.getElementById("ecran");
+  var plateau = document.getElementById("plateau");
+  var pied = document.getElementById("pied");
+
+  function autre(i){ return i===0?1:0; }
+  function couleur(i){ return i===0?"var(--equipeA)":"var(--equipeB)"; }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function themeCourant(){ return THEMES[S.themeIdx]; }
+  function questionDe(niveau){
+    var t = themeCourant(); if(!t) return null;
+    for(var i=0;i<t.questions.length;i++){ if(t.questions[i].niveau===niveau) return t.questions[i]; }
+    return null;
+  }
+
+  /* ---------------- Rendu ---------------- */
+
+  function majPlateau(){
+    var enJeu = S.ecran!=="reglages";
+    plateau.hidden = !enJeu;
+    pied.hidden = !enJeu;
+    document.getElementById("nomA").textContent = S.equipes[0].nom;
+    document.getElementById("nomB").textContent = S.equipes[1].nom;
+    document.getElementById("ptsA").textContent = S.equipes[0].score;
+    document.getElementById("ptsB").textContent = S.equipes[1].score;
+    document.getElementById("numManche").textContent = S.manche;
+    var actif = (S.ecran==="enchere") ? S.tour : (S.ecran==="question"||S.ecran==="verdict") ? S.encherisseur : -1;
+    [0,1].forEach(function(i){
+      var d = document.getElementById(i===0?"eqA":"eqB");
+      d.classList.toggle("actif", actif===i);
+      var etat = "";
+      if(S.ecran==="enchere"){
+        if(S.tour===i) etat = "à vous";
+        else if(S.encherisseur===i) etat = "mise : " + S.mise;
+      } else if((S.ecran==="question"||S.ecran==="verdict") && S.encherisseur===i){
+        etat = "répond au " + S.mise;
+      }
+      document.getElementById(i===0?"etatA":"etatB").textContent = etat;
+    });
+    document.getElementById("btnAnnuler").hidden = (S.ecran==="reglages" || !S.snapshot);
+  }
+
+  function rendre(){
+    majPlateau();
+    ({reglages:vueReglages, theme:vueTheme, enchere:vueEnchere,
+      question:vueQuestion, verdict:vueVerdict, fin:vueFin})[S.ecran]();
+  }
+
+  function vueReglages(){
+    el.innerHTML =
+      '<p class="eyebrow">Jeu d’enchères — 2 équipes</p>'+
+      '<h1>Tu te mets combien&nbsp;?</h1>'+
+      '<p class="aide">Le meneur de jeu annonce un thème. Les équipes s’enchérissent sur la difficulté, de 1 à 10. '+
+      'Celle qui monte le plus haut répond&nbsp;— et empoche le nombre de points qu’elle a osé annoncer.</p>'+
+      '<div class="champs">'+
+        '<div><label for="n1">Nom de l’équipe 1</label><input id="n1" type="text" value="'+esc(S.equipes[0].nom)+'" maxlength="22"></div>'+
+        '<div><label for="n2">Nom de l’équipe 2</label><input id="n2" type="text" value="'+esc(S.equipes[1].nom)+'" maxlength="22"></div>'+
+      '</div>'+
+      '<div class="champs">'+
+        '<div><label for="obj">Points pour gagner</label><input id="obj" type="number" min="0" max="200" step="5" value="'+S.objectif+'"></div>'+
+        '<div><label for="ouv">Qui ouvre les enchères</label><select id="ouv"><option value="0">'+esc(S.equipes[0].nom)+'</option><option value="1">'+esc(S.equipes[1].nom)+'</option></select></div>'+
+      '</div>'+
+      '<div class="case"><input id="malus" type="checkbox" '+(S.malus?"checked":"")+'><span>Si la réponse est fausse, l’équipe adverse récupère les points de la mise.</span></div>'+
+      '<button class="btn" id="go">Commencer la partie</button>'+
+      '<p class="raccourcis">Astuce : 0 point d’objectif = partie sans limite, vous arrêtez quand vous voulez.</p>';
+
+    document.getElementById("ouv").value = S.ouvreur;
+    document.getElementById("go").onclick = function(){
+      var n1 = document.getElementById("n1").value.trim();
+      var n2 = document.getElementById("n2").value.trim();
+      S.equipes[0].nom = n1 || "Équipe 1";
+      S.equipes[1].nom = n2 || "Équipe 2";
+      S.objectif = Math.max(0, parseInt(document.getElementById("obj").value,10) || 0);
+      S.malus = document.getElementById("malus").checked;
+      S.ouvreur = parseInt(document.getElementById("ouv").value,10) || 0;
+      S.equipes[0].score = 0; S.equipes[1].score = 0;
+      S.manche = 1; S.posees = {}; S.snapshot = null;
+      nouvelleManche();
+    };
+  }
+
+  function vueTheme(){
+    if(!THEMES.length){
+      el.innerHTML = '<h2>Aucun thème chargé</h2><p class="aide">Le fichier <code>questions.js</code> n’a pas été trouvé ou il est vide. Vérifiez qu’il se trouve bien à côté de <code>index.html</code>.</p>';
+      return;
+    }
+    var html = '<p class="eyebrow">Manche '+S.manche+' — au meneur de jeu</p><h2>Choisissez le thème</h2>'+
+               '<p class="aide">Annoncez-le à voix haute, puis laissez '+esc(S.equipes[S.ouvreur].nom)+' ouvrir les enchères.</p><div class="themes">';
+    THEMES.forEach(function(t,i){
+      var n = (S.posees[i]||[]).length;
+      html += '<button class="theme-btn" data-i="'+i+'">'+esc(t.theme)+
+              '<small>'+(n ? n+' question'+(n>1?"s":"")+' posée'+(n>1?"s":"") : t.questions.length+' niveaux')+'</small></button>';
+    });
+    html += '</div><button class="btn fant" id="hasard">Thème au hasard</button>';
+    el.innerHTML = html;
+
+    Array.prototype.forEach.call(el.querySelectorAll(".theme-btn"), function(b){
+      b.onclick = function(){ lancerEncheres(parseInt(b.dataset.i,10)); };
+    });
+    document.getElementById("hasard").onclick = function(){
+      lancerEncheres(Math.floor(Math.random()*THEMES.length));
+    };
+  }
+
+  function vueEnchere(){
+    var t = themeCourant();
+    var posees = S.posees[S.themeIdx] || [];
+    var html =
+      '<p class="eyebrow">Thème — '+esc(t.theme)+'</p>'+
+      '<div class="enchere" style="--c:'+couleur(S.tour)+'">'+
+        '<div class="qui">'+esc(S.equipes[S.tour].nom)+'</div>'+
+        '<div class="mise'+(S.mise?"":" vide")+'">'+(S.mise||"—")+'</div>'+
+        '<div class="legende">'+(S.mise ? "mise à battre — annoncée par "+esc(S.equipes[S.encherisseur].nom) : "à vous d’ouvrir")+'</div>'+
+      '</div><div class="echelle">';
+
+    for(var n=1;n<=10;n++){
+      var dispo = n > S.mise;
+      var cls = "barreau";
+      if(n===S.mise) cls += " courant";
+      else if(n < S.mise) cls += " atteint";
+      else cls += " dispo";
+      if(n>=8) cls += " corse";
+      html += '<button class="'+cls+'" data-n="'+n+'"'+(dispo?"":" disabled")+'>'+n+
+              (posees.indexOf(n)>-1 ? '<span class="posee" title="déjà posée"></span>' : '')+'</button>';
+    }
+    html += '</div>';
+
+    if(S.mise === 0){
+      html += '<p class="aide" style="text-align:center;margin:0">Aucune enchère : '+esc(S.equipes[S.tour].nom)+' doit annoncer un niveau pour lancer la manche.</p>';
+    } else if(S.mise === 10){
+      html += '<button class="btn" id="passe">Impossible de surenchérir — '+esc(S.equipes[S.encherisseur].nom)+' répond au 10</button>';
+    } else {
+      html += '<button class="btn fant" id="passe">'+esc(S.equipes[S.tour].nom)+' passe — '+esc(S.equipes[S.encherisseur].nom)+' répond au '+S.mise+'</button>';
+    }
+    html += '<p class="raccourcis">Clavier : touches 1 à 9 et 0 pour le niveau 10 · touche P pour passer</p>';
+    el.innerHTML = html;
+
+    Array.prototype.forEach.call(el.querySelectorAll(".barreau"), function(b){
+      if(b.disabled) return;
+      b.onclick = function(){ encherir(parseInt(b.dataset.n,10)); };
+    });
+    var p = document.getElementById("passe");
+    if(p) p.onclick = passer;
+  }
+
+  function vueQuestion(){
+    var q = questionDe(S.mise);
+    var html =
+      '<p class="eyebrow">'+esc(themeCourant().theme)+' — '+esc(S.equipes[S.encherisseur].nom)+' répond</p>'+
+      '<div class="enonce"><div class="niv">Niveau '+S.mise+' · '+S.mise+' point'+(S.mise>1?"s":"")+' en jeu</div>'+
+      '<div class="txt">'+(q ? esc(q.question) : "Aucune question n’est définie au niveau "+S.mise+" pour ce thème.")+'</div></div>';
+
+    if(S.reponseVisible && q){
+      html += '<div class="reponse"><div class="lab">Réponse attendue</div><div class="txt">'+esc(q.reponse)+'</div></div>';
+    } else if(q){
+      html += '<button class="btn fant" id="voir" style="margin-bottom:14px">Afficher la réponse</button>';
+    }
+    html += '<div class="duo"><button class="btn ok" id="reussi">Réussi</button><button class="btn ko" id="rate">Raté</button></div>';
+    el.innerHTML = html;
+
+    var v = document.getElementById("voir");
+    if(v) v.onclick = function(){ S.reponseVisible = true; rendre(); };
+    document.getElementById("reussi").onclick = function(){ trancher(true); };
+    document.getElementById("rate").onclick = function(){ trancher(false); };
+  }
+
+  function vueVerdict(){
+    var v = S.dernier;
+    var gagnant = v.reussi ? S.encherisseur : (S.malus ? autre(S.encherisseur) : null);
+    var html = '<div class="resultat">';
+    if(v.reussi){
+      html += '<div class="gros" style="color:'+couleur(S.encherisseur)+'">Bien joué, '+esc(S.equipes[S.encherisseur].nom)+'&nbsp;!</div>'+
+              '<div class="detail">+'+S.mise+' point'+(S.mise>1?"s":"")+' pour l’enchère au niveau '+S.mise+'.</div>';
+    } else if(gagnant !== null){
+      html += '<div class="gros">Raté — la mise part chez '+esc(S.equipes[gagnant].nom)+'</div>'+
+              '<div class="detail">+'+S.mise+' point'+(S.mise>1?"s":"")+' pour '+esc(S.equipes[gagnant].nom)+'.</div>';
+    } else {
+      html += '<div class="gros">Raté — personne ne marque</div><div class="detail">La mise de '+S.mise+' tombe à l’eau.</div>';
+    }
+    html += '<button class="btn" id="suite">Manche suivante</button></div>';
+    el.innerHTML = html;
+    document.getElementById("suite").onclick = function(){
+      if(S.objectif > 0 && (S.equipes[0].score >= S.objectif || S.equipes[1].score >= S.objectif)){
+        S.ecran = "fin"; rendre(); return;
+      }
+      S.manche++; S.ouvreur = autre(S.ouvreur); nouvelleManche();
+    };
+  }
+
+  function vueFin(){
+    var a = S.equipes[0].score, b = S.equipes[1].score;
+    var titre = a===b ? "Égalité parfaite" : "Victoire de " + esc(S.equipes[a>b?0:1].nom);
+    el.innerHTML =
+      '<p class="eyebrow">Fin de partie</p>'+
+      '<div class="resultat"><div class="gros">'+titre+'</div>'+
+      '<div class="detail">'+esc(S.equipes[0].nom)+' '+a+' — '+b+' '+esc(S.equipes[1].nom)+'</div>'+
+      '<button class="btn" id="rejouer">Rejouer</button></div>';
+    document.getElementById("rejouer").onclick = reinitialiser;
+  }
+
+  /* ---------------- Logique ---------------- */
+
+  function nouvelleManche(){
+    S.themeIdx = null; S.mise = 0; S.encherisseur = null;
+    S.tour = S.ouvreur; S.reponseVisible = false;
+    S.ecran = "theme";
+    rendre();
+  }
+
+  function lancerEncheres(i){
+    S.themeIdx = i; S.mise = 0; S.encherisseur = null; S.tour = S.ouvreur;
+    S.ecran = "enchere"; rendre();
+  }
+
+  function encherir(n){
+    if(S.ecran!=="enchere" || n<=S.mise) return;
+    S.mise = n; S.encherisseur = S.tour; S.tour = autre(S.tour);
+    rendre();
+  }
+
+  function passer(){
+    if(S.ecran!=="enchere" || S.mise===0) return;
+    S.reponseVisible = false;
+    S.ecran = "question";
+    rendre();
+  }
+
+  function trancher(reussi){
+    S.snapshot = { a:S.equipes[0].score, b:S.equipes[1].score, manche:S.manche, ouvreur:S.ouvreur, theme:S.themeIdx, mise:S.mise, encherisseur:S.encherisseur };
+    if(reussi) S.equipes[S.encherisseur].score += S.mise;
+    else if(S.malus) S.equipes[autre(S.encherisseur)].score += S.mise;
+
+    if(!S.posees[S.themeIdx]) S.posees[S.themeIdx] = [];
+    if(S.posees[S.themeIdx].indexOf(S.mise) === -1) S.posees[S.themeIdx].push(S.mise);
+
+    S.dernier = { reussi:reussi };
+    S.ecran = "verdict";
+    rendre();
+  }
+
+  function annulerManche(){
+    if(!S.snapshot) return;
+    var s = S.snapshot;
+    S.equipes[0].score = s.a; S.equipes[1].score = s.b;
+    S.manche = s.manche; S.ouvreur = s.ouvreur;
+    var p = S.posees[s.theme];
+    if(p){ var k = p.indexOf(s.mise); if(k>-1) p.splice(k,1); }
+    S.snapshot = null;
+    S.themeIdx = s.theme; S.mise = s.mise; S.encherisseur = s.encherisseur;
+    S.reponseVisible = false; S.ecran = "question";
+    rendre();
+  }
+
+  function reinitialiser(){
+    S.ecran = "reglages"; S.manche = 1; S.posees = {}; S.snapshot = null;
+    S.equipes[0].score = 0; S.equipes[1].score = 0;
+    rendre();
+  }
+
+  document.getElementById("btnAnnuler").onclick = annulerManche;
+  document.getElementById("btnRejouer").onclick = function(){
+    if(confirm("Remettre les scores à zéro et revenir aux réglages ?")) reinitialiser();
+  };
+
+  document.addEventListener("keydown", function(e){
+    if(S.ecran!=="enchere") return;
+    if(/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    if(e.key>="1" && e.key<="9") encherir(parseInt(e.key,10));
+    else if(e.key==="0") encherir(10);
+    else if(e.key.toLowerCase()==="p") passer();
+  });
+
+  rendre();
+})();
+</script>
+</body>
+</html>
